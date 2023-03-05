@@ -13,7 +13,7 @@ const axiosLogin = async (email, password) => {
 };
 
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf('6116692347:AAGTOsJBqS0Jn59E6XHSlOilxmLYp4FJhug');
 
 bot.start((ctx) => ctx.reply('send me ur geolocation'));
 
