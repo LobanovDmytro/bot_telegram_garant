@@ -18,7 +18,7 @@ const bot = new Telegraf('6116692347:AAGTOsJBqS0Jn59E6XHSlOilxmLYp4FJhug');
 bot.start((ctx) => ctx.reply('send me ur geolocation'));
 
 bot.on('message', async (ctx) => {
-  if (ctx.message?.text === 'Мой ид') {
+  if (ctx.message?.text === '/MyId') {
     const result = ctx.message?.from?.id;
     return ctx.reply(`${result}`);
   }
