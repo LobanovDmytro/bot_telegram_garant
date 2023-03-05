@@ -37,9 +37,4 @@ bot.on('message', async (ctx) => {
   ctx.reply(`${ctx.message?.text}`)
 });
 
-bot.on('ochko', async (ctx) => {
-
-  console.log(ctx)
-});
-
 bot.launch();
