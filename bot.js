@@ -1,4 +1,4 @@
-const axios = require('axios');
+// const axios = require('axios');
 // const jwt_decode = require('jwt-decode');
 // const json = require('json');
 // require('dotenv').config();
@@ -47,13 +47,13 @@ const TelegramApi = require('node-telegram-bot-api');
 const token = '6116692347:AAGTOsJBqS0Jn59E6XHSlOilxmLYp4FJhug';
 
 const bot = new TelegramApi(token,{polling:true});
-axios.default.baseURL = `https://back-yipq.onrender.com`;
+// // axios.default.baseURL = `https://back-yipq.onrender.com`;
 
 // bot.on('message', async (ctx) => {
 //     const chatId = ctx.chat.id;
-//     bot.sendMessage(chatId, "Привет,получи id и начни следить за чатами", {
+//     bot.sendMessage(chatId, "", {
 //       reply_markup: {
-//         keyboard: [
+//         inline_keyboard: [
 //           [ { text: "Получить id",callback_data: "/MyId"} ]
 //         ],
 //         resize_keyboard: true
@@ -72,38 +72,62 @@ axios.default.baseURL = `https://back-yipq.onrender.com`;
 // });
 
 
-// Обработчик команды /start
-bot.onText(/\/start/, async(msg) => {
-  // Отправляем сообщение с кнопкой "Вход"
- await bot.sendMessage(msg.chat.id, "Для входа введите свой логин и пароль", {
+// // Обработчик команды /start
+// bot.onText(/\/start/, async(msg) => {
+//   // Отправляем сообщение с кнопкой "Вход"
+//  await bot.sendMessage(msg.chat.id, "Для входа введите свой логин и пароль", {
+//     reply_markup: {
+//       inline_keyboard: [
+//         [{ text: "Вход" }]
+//       ],
+//       resize_keyboard: true
+//     }
+//   });
+// });
+
+// // Обработчик нажатия кнопки "Вход"
+// bot.onText(/Вход/, async(msg) => {
+//   // Отправляем сообщение с просьбой ввести логин
+//   await bot.sendMessage(msg.chat.id, "Введите логин:");
+
+//   // Ожидаем ответа пользователя с логином
+//    bot.once('message', (loginMsg) => {
+//     const login = loginMsg.text;
+
+//     // Отправляем сообщение с просьбой ввести пароль
+//   bot.sendMessage(msg.chat.id, "Введите пароль:");
+
+//     // Ожидаем ответа пользователя с паролем
+//    bot.once('message', (passwordMsg) => {
+//       const password = passwordMsg.text;
+
+//       // Отправляем сообщение с логином и паролем
+//     bot.sendMessage(msg.chat.id, `Логин: ${login}\nПароль: ${password}`);
+//     });
+//   });
+// });
+
+bot.on('message', (msg) => {
+  const chatId = msg.chat.id;
+
+  bot.sendMessage(chatId, "ИДИ НАХУЙ", {
     reply_markup: {
-      keyboard: [
-        [{ text: "Вход" }]
-      ],
-      resize_keyboard: true
+      inline_keyboard: [
+        [ { text: "Выполнить команду", callback_data: "/MyId" } ]
+      ]
     }
   });
 });
 
-// Обработчик нажатия кнопки "Вход"
-bot.onText(/Вход/, async(msg) => {
-  // Отправляем сообщение с просьбой ввести логин
-  await bot.sendMessage(msg.chat.id, "Введите логин:");
+bot.on('callback_query', (query) => {
+  const chatId = query.message.chat.id;
+  const messageId = query.message.message_id;
+  const data = query.data;
 
-  // Ожидаем ответа пользователя с логином
-   bot.once('message', (loginMsg) => {
-    const login = loginMsg.text;
+  if (data === "/MyId") {
+    bot.sendMessage(chatId, `Выполнена команда: ${chatId}`);
+  }
 
-    // Отправляем сообщение с просьбой ввести пароль
-  bot.sendMessage(msg.chat.id, "Введите пароль:");
-
-    // Ожидаем ответа пользователя с паролем
-   bot.once('message', (passwordMsg) => {
-      const password = passwordMsg.text;
-
-      // Отправляем сообщение с логином и паролем
-    bot.sendMessage(msg.chat.id, `Логин: ${login}\nПароль: ${password}`);
-    });
-  });
+  bot.answerCallbackQuery(query.id);
 });
 
