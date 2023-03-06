@@ -36,8 +36,8 @@ const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: JSON.stringify({
     inline_keyboard:[
-      [ {text: 'Чаты поддержки', callback_data: 'sdadas'} ],
-      [ {text: 'Чаты сделок', callback_data: 'eqweqwewq'} ],
+      [ {text: 'Чаты поддержки', callback_data: '/chats'} ],
+      [ {text: 'Чаты сделок', callback_data: '/dealchats'} ],
     ]
   })
 }
@@ -53,24 +53,24 @@ bot.on('message', async (ctx) => {
   if (ctx.text === '/id') {
     return bot.sendMessage(chatId, `твой id чата ${chatId}`);
   }
-  if (ctx.text === 'Шо') {
-    return bot.sendMessage(chatId, "Шо ты хуесос", {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Получить id", callback_data: "/MyId" }]
-        ],
-        resize_keyboard: true
-      }
-    });
-  }
+  // if (ctx.text === 'Шо') {
+  //   return bot.sendMessage(chatId, "Шо ты хуесос", {
+  //     reply_markup: {
+  //       inline_keyboard: [
+  //         [{ text: "Получить id", callback_data: "/MyId" }]
+  //       ],
+  //       resize_keyboard: true
+  //     }
+  //   });
+  // }
 
   if (ctx.text === '/start') {
     return bot.sendMessage(chatId, "Для входа введите свой логин и пароль", {
       reply_markup: {
-        keyboard: [
+        inline_keyboard: [
           [{ text: "Вход", callback_data: "/login" }]
         ],
-        
+        resize_keyboard: true
       }
     });
   }
