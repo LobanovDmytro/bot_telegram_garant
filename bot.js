@@ -3,6 +3,7 @@ const jwt_decode = require('jwt-decode');
 const json = require('json');
 require('dotenv').config();
 const TelegramApi = require('node-telegram-bot-api');
+const sharp = require('sharp');
 
 axios.defaults.baseURL = `https://back-yipq.onrender.com`;
 
@@ -16,7 +17,6 @@ const axiosGetChatID = async () => {
     return data.telegramUsers;
   }
 };
-
 
 const axiosCreateChat = async (name, chatid, email, password) => {
   const { data } = await axios.post('api/tg/create', { name, chatid, email, password });
@@ -36,6 +36,18 @@ const axiosGetAdminMessages = async (chatid, email) => {
     return data;
   }
 };
+const axiosGetDeals = async (chatid) => {
+  const { data } = await axios.post('api/tg/getDeals', { chatid });
+  if (data) {
+    return data;
+  }
+};
+const axiosGetDealMessages = async (chatid, dealId) => {
+  const { data } = await axios.post('api/tg/getDealMessages', { chatid, dealId });
+  if (data) {
+    return data;
+  }
+};
 const axiosDeleteChat = async (name, deleteName) => {
   const { data } = await axios.post('api/tg/delete', { chatid: String(name), deleteName });
   if (data) {
@@ -47,7 +59,7 @@ const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: {
     keyboard: [
-      [{ text: 'Чаты поддержки' }, { text: 'Чаты сделок' }, { text: 'Мой ид' }, { text: "Вход" }, { text: "Доступ" }, { text: "Админ чаты" }],
+      [{ text: "Админ чаты" }, { text: "Чаты сделок" }, { text: 'Мой ид' }, { text: "Вход" }, { text: "Доступ" }],
     ],
     resize_keyboard: true
   }
@@ -80,7 +92,6 @@ bot.on('message', async (ctx) => {
     bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
     const result = await axiosGetChatID();
     const checkAccess = result.filter(item => item.chatid === String(chatId))[0]
-    console.log('result', result, checkAccess)
     if (checkAccess) {
       return bot.sendMessage(chatId, `${result.reduce((acc, item) => `${acc}
 ${item.name} ${item.chatid}`, '')}`)
@@ -138,7 +149,24 @@ ${item.name} ${item.chatid}`, '')}`)
         }
       })
     } catch (e) {
-      console.log(1, e)
+      console.log('error', e?.response?.data)
+      bot.sendMessage(chatId, `Ошибка, ${e.response.data.message.toLowerCase()}`)
+    }
+  }
+  if (ctx.text === 'Чаты сделок') {
+    bot.sendMessage(chatId, "Ожидайте, выполняется запрос");
+    try {
+      const response = await axiosGetDeals(String(chatId))
+      return bot.sendMessage(chatId, 'Сделки:', {
+        reply_markup: {
+          inline_keyboard: response.map(item => [{
+            text: `${item.buyerNickname} / ${item.sellerNickname} / ${item.createdAt}`, callback_data: `/dealChat ${item.id}`
+          }]),
+          resize_keyboard: true
+        }
+      })
+    } catch (e) {
+      console.log('error', e?.response?.data)
       bot.sendMessage(chatId, `Ошибка, ${e.response.data.message.toLowerCase()}`)
     }
   }
@@ -180,6 +208,7 @@ bot.on('callback_query', async (query) => {
       }
     })
   }
+
   if (data.includes('adminChat')) {
     bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
     const email = data.split(' ')[1]
@@ -187,7 +216,41 @@ bot.on('callback_query', async (query) => {
       try {
         const messages = await axiosGetAdminMessages(chatId, email);
         if (messages) {
-          console.log(1, messages)
+          const checkPhoto = messages?.filter(item => !item.message)[0]?.image || ''
+          bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
+${item.nickname} ${item.time} ${item.message || 'Изображение, нажмите кнопку ниже чтобы увидеть'}`, '')}`, checkPhoto ? {
+            reply_markup: {
+              inline_keyboard: [[{ text: `Отправить фото`, callback_data: `Да` }, { text: `Не отправлять`, callback_data: `Нет` }]],
+              resize_keyboard: true
+            }
+          } : {})
+          if (checkPhoto) return bot.once('callback_query', async (check) => {
+            const answer = check.data;
+            if (answer === 'Да') {
+              //  const base64Image = messages.filter(item => !item.message)[0].image;
+              // const imageBuffer = Buffer.from(base64Image.split(',')[1], 'base64');
+              messages.filter(item => !item.message).map(el => bot.sendPhoto(chatId, Buffer.from(el.image.split(',')[1], 'base64')));
+            } else {
+              return bot.sendMessage(chatId, `Отменено`);
+            }
+          })
+        }
+      } catch (e) {
+        console.log('error', e)
+        bot.sendMessage(chatId, `Ошибка, ${e.data.message.toLowerCase()}`)
+      };
+    } else {
+      return bot.sendMessage(chatId, `Email не найден (перезапустите бота)`);
+    }
+  }
+
+  if (data.includes('dealChat')) {
+    bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
+    const dealId = data.split(' ')[1]
+    if (dealId) {
+      try {
+        const messages = await axiosGetDealMessages(chatId, dealId);
+        if (messages) {
           return bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
 ${item.nickname} ${item.time} ${item.message}`, '')}`)
         }
@@ -196,7 +259,7 @@ ${item.nickname} ${item.time} ${item.message}`, '')}`)
         bot.sendMessage(chatId, `Ошибка, ${e.data.message.toLowerCase()}`)
       };
     } else {
-      return bot.sendMessage(chatId, `Email не найден (перезапустите бота)`);
+      return bot.sendMessage(chatId, `Id не найдено (перезапустите бота)`);
     }
   }
 
