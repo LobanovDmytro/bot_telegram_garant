@@ -24,6 +24,18 @@ const axiosCreateChat = async (name, chatid, email, password) => {
     return data;
   }
 };
+const axiosGetAdminChats = async (chatid) => {
+  const { data } = await axios.post('api/tg/getAdminChats', { chatid });
+  if (data) {
+    return data;
+  }
+};
+const axiosGetAdminMessages = async (chatid, email) => {
+  const { data } = await axios.post('api/tg/getAdminMessages', { chatid, email });
+  if (data) {
+    return data;
+  }
+};
 const axiosDeleteChat = async (name, deleteName) => {
   const { data } = await axios.post('api/tg/delete', { chatid: String(name), deleteName });
   if (data) {
@@ -35,7 +47,7 @@ const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: {
     keyboard: [
-      [{ text: 'Чаты поддержки' }, { text: 'Чаты сделок' }, { text: 'Мой ид' }, { text: "Вход" }, { text: "Доступ" }],
+      [{ text: 'Чаты поддержки' }, { text: 'Чаты сделок' }, { text: 'Мой ид' }, { text: "Вход" }, { text: "Доступ" }, { text: "Админ чаты" }],
     ],
     resize_keyboard: true
   }
@@ -115,12 +127,27 @@ ${item.name} ${item.chatid}`, '')}`)
       });
     });
   }
+  if (ctx.text === 'Админ чаты') {
+    bot.sendMessage(chatId, "Ожидайте, выполняется запрос");
+    try {
+      const response = await axiosGetAdminChats(String(chatId))
+      return bot.sendMessage(chatId, 'Чаты:', {
+        reply_markup: {
+          inline_keyboard: response.map(item => [{ text: `${item.nickname}`, callback_data: `/adminChat ${item.email}` }]),
+          resize_keyboard: true
+        }
+      })
+    } catch (e) {
+      console.log(1, e)
+      bot.sendMessage(chatId, `Ошибка, ${e.response.data.message.toLowerCase()}`)
+    }
+  }
 });
 
 
 
 
-bot.on('callback_query', (query) => {
+bot.on('callback_query', async (query) => {
   const chatId = query.from?.id
   const data = query.data;
   if (data.includes('deleteuser')) {
@@ -153,4 +180,24 @@ bot.on('callback_query', (query) => {
       }
     })
   }
+  if (data.includes('adminChat')) {
+    bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
+    const email = data.split(' ')[1]
+    if (email) {
+      try {
+        const messages = await axiosGetAdminMessages(chatId, email);
+        if (messages) {
+          console.log(1, messages)
+          return bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
+${item.nickname} ${item.time} ${item.message}`, '')}`)
+        }
+      } catch (e) {
+        console.log('error', e)
+        bot.sendMessage(chatId, `Ошибка, ${e.data.message.toLowerCase()}`)
+      };
+    } else {
+      return bot.sendMessage(chatId, `Email не найден (перезапустите бота)`);
+    }
+  }
+
 });
