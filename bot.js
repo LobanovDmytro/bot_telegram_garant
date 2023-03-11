@@ -59,7 +59,7 @@ const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: {
     keyboard: [
-      [{ text: "Админ чаты" }, { text: "Чаты сделок" }, { text: 'Мой ид' }, { text: "Вход" }, { text: "Доступ" }],
+      [{ text: "Админ чаты" }, { text: "Чаты сделок" }, { text: "Вход" }, { text: "Доступ" }],
     ],
     resize_keyboard: true
   }
@@ -82,36 +82,42 @@ bot.on('message', async (ctx) => {
   //     }
   //   });
   //}
-  if (ctx.text === "Мой ид") {
-    return bot.sendMessage(chatId, `Твой id чата ${chatId}`);
-  }
   if (ctx.text === '/start') {
     return bot.sendMessage(chatId, "Меню", buttonForm)
   }
   if (ctx.text === 'Чаты поддержки') {
     bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
-    const result = await axiosGetChatID();
-    const checkAccess = result.filter(item => item.chatid === String(chatId))[0]
-    if (checkAccess) {
-      return bot.sendMessage(chatId, `${result.reduce((acc, item) => `${acc}
+    try {
+      const result = await axiosGetChatID();
+      const checkAccess = result.filter(item => item.chatid === String(chatId))[0]
+      if (checkAccess) {
+        return bot.sendMessage(chatId, `${result.reduce((acc, item) => `${acc}
 ${item.name} ${item.chatid}`, '')}`)
-    } else {
-      return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+      } else {
+        return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+      }
+    } catch (e) {
+      bot.sendMessage(chatId, `Произошла ошибка, проверьте сервер`)
     }
   }
   if (ctx.text === 'Доступ') {
     bot.sendMessage(chatId, `Ожидайте, выполняется запрос`)
-    const result = await axiosGetChatID();
-    const checkAccess = result.filter(item => item.chatid === String(chatId))[0]
-    if (checkAccess) {
-      return bot.sendMessage(chatId, 'Доступ:', {
-        reply_markup: {
-          inline_keyboard: result.map(item => [{ text: `${item.name} ${item.chatid}`, callback_data: `/deleteuser ${item.name}` }]),
-          resize_keyboard: true
-        }
-      })
-    } else {
-      return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+    try {
+      const result = await axiosGetChatID();
+      const checkAccess = result.filter(item => item.chatid === String(chatId))[0]
+      if (checkAccess) {
+        return bot.sendMessage(chatId, `Ваш ид: ${chatId}`, {
+          reply_markup: {
+            inline_keyboard: result.map(item => [{ text: `${item.name} ${item.chatid}`, callback_data: `/deleteuser ${item.name}` }]),
+            resize_keyboard: true
+          }
+        })
+      } else {
+        return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+      }
+    } catch (e) {
+      // console.log(1, e)
+      return bot.sendMessage(chatId, `Произошла ошибка, проверьте сервер`)
     }
   }
   if (ctx.text === "Вход") {
@@ -132,7 +138,7 @@ ${item.name} ${item.chatid}`, '')}`)
             const response = await axiosCreateChat(name, String(chatId), login, password)
             return bot.sendMessage(chatId, `Успешно`);
           } catch (e) {
-            bot.sendMessage(chatId, `Пошел нахуй, ${e.response.data.message.toLowerCase()}`)
+            bot.sendMessage(chatId, `Пошел нахуй, ${e?.response?.data?.message?.toLowerCase()}`)
           }
         });
       });
@@ -149,7 +155,6 @@ ${item.name} ${item.chatid}`, '')}`)
         }
       })
     } catch (e) {
-      console.log('error', e)
       bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
     }
   }
@@ -159,14 +164,13 @@ ${item.name} ${item.chatid}`, '')}`)
       const response = await axiosGetDeals(String(chatId))
       return bot.sendMessage(chatId, 'Сделки:', {
         reply_markup: {
-          inline_keyboard: response.sort((a, b) => a.id - b.id).map(item => [{
+          inline_keyboard: response?.sort((a, b) => a.id - b.id).map(item => [{
             text: `${item.buyerNickname} / ${item.sellerNickname} / ${item.createdAt?.split('.')[0]?.replace('T', ' ')}`, callback_data: `/dealChat ${item.id}`
           }]),
           resize_keyboard: true
         }
       })
     } catch (e) {
-      console.log('error', e?.response)
       bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
     }
   }
@@ -197,8 +201,7 @@ bot.on('callback_query', async (query) => {
               return bot.sendMessage(chatId, `Успешно удалено`)
             }
           } catch (e) {
-            console.log('error', e?.response?.data)
-            bot.sendMessage(chatId, `Пошел нахуй, ${e.data.message.toLowerCase()}`)
+            bot.sendMessage(chatId, `Пошел нахуй, ${e?.response?.data?.message?.toLowerCase()}`)
           };
         } else {
           return bot.sendMessage(chatId, `Имя не найдено(перезапустите бота)`);
@@ -229,15 +232,14 @@ ${item.nickname} ${item.time} ${item.message || 'Изображение, наж�
             if (answer === 'Да') {
               //  const base64Image = messages.filter(item => !item.message)[0].image;
               // const imageBuffer = Buffer.from(base64Image.split(',')[1], 'base64');
-              messages.filter(item => !item.message).map((el, index) => bot.sendPhoto(chatId, Buffer.from(el.image.split(',')[1], 'base64'), { caption: `№${index + 1} ${el.nickname} ${el.time}` }));
+              messages.filter(item => !item.message).map((el, index) => bot.sendPhoto(chatId, Buffer.from(el.image?.split(',')[1], 'base64'), { caption: `№${index + 1} ${el.nickname} ${el.time}` }));
             } else {
               return bot.sendMessage(chatId, `Отменено`);
             }
           })
         }
       } catch (e) {
-        console.log('error', e)
-        bot.sendMessage(chatId, `Ошибка, ${e.data.message.toLowerCase()}`)
+        bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
       };
     } else {
       return bot.sendMessage(chatId, `Email не найден (перезапустите бота)`);
@@ -255,8 +257,7 @@ ${item.nickname} ${item.time} ${item.message || 'Изображение, наж�
 ${item.nickname} ${item.time} ${item.message}`, '')}`)
         }
       } catch (e) {
-        console.log('error', e)
-        bot.sendMessage(chatId, `Ошибка, ${e.data.message.toLowerCase()}`)
+        bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
       };
     } else {
       return bot.sendMessage(chatId, `Id не найдено (перезапустите бота)`);
