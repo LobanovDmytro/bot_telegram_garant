@@ -7,10 +7,6 @@ const sharp = require('sharp');
 
 axios.defaults.baseURL = `https://back-yipq.onrender.com`;
 
-// const axiosLogin = async (email, password) => {
-//   const { data } = await axios.post('api/user/login', { email, password });
-//   return jwt_decode(data.token);
-// };
 const axiosGetChatID = async () => {
   const { data } = await axios.get('api/tg/get');
   if (data.telegramUsers) {
@@ -54,7 +50,7 @@ const axiosDeleteChat = async (name, deleteName) => {
     return data;
   }
 };
-const token = '6149778778:AAFPlXbrTIXD_zDG4LLaeeqTH8fbKJM7kmA';
+const token = '6149778778:AAE4x0EeNIe3kauBGOyxSEbJ9LWy-MyGCFo';
 const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: {
