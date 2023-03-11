@@ -64,9 +64,7 @@ try {
   const bot = new TelegramApi(token, { polling: true });
   getFunctional(bot)
 } catch (e) {
-  const token = '6116692347:AAHpsvo1yEqUSPNquV-5Mmrni1cpH2gC74I';
-  const bot = new TelegramApi(token, { polling: true });
-  getFunctional(bot)
+  console.log('Ошибка запуска')
 }
 function getFunctional(bot) {
   bot.setMyCommands([
