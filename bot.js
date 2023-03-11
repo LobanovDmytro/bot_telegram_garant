@@ -144,13 +144,13 @@ ${item.name} ${item.chatid}`, '')}`)
       const response = await axiosGetAdminChats(String(chatId))
       return bot.sendMessage(chatId, 'Чаты:', {
         reply_markup: {
-          inline_keyboard: response.map(item => [{ text: `${item.nickname}`, callback_data: `/adminChat ${item.email}` }]),
+          inline_keyboard: response.map(item => [{ text: `${item.nickname} последнее изменение: ${item.updatedAt?.split('.')[0]?.replace('T', ' ')}`, callback_data: `/adminChat ${item.email}` }]),
           resize_keyboard: true
         }
       })
     } catch (e) {
-      console.log('error', e?.response?.data)
-      bot.sendMessage(chatId, `Ошибка, ${e.response.data.message.toLowerCase()}`)
+      console.log('error', e)
+      bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
     }
   }
   if (ctx.text === 'Чаты сделок') {
@@ -159,15 +159,15 @@ ${item.name} ${item.chatid}`, '')}`)
       const response = await axiosGetDeals(String(chatId))
       return bot.sendMessage(chatId, 'Сделки:', {
         reply_markup: {
-          inline_keyboard: response.map(item => [{
-            text: `${item.buyerNickname} / ${item.sellerNickname} / ${item.createdAt}`, callback_data: `/dealChat ${item.id}`
+          inline_keyboard: response.sort((a, b) => a.id - b.id).map(item => [{
+            text: `${item.buyerNickname} / ${item.sellerNickname} / ${item.createdAt?.split('.')[0]?.replace('T', ' ')}`, callback_data: `/dealChat ${item.id}`
           }]),
           resize_keyboard: true
         }
       })
     } catch (e) {
-      console.log('error', e?.response?.data)
-      bot.sendMessage(chatId, `Ошибка, ${e.response.data.message.toLowerCase()}`)
+      console.log('error', e?.response)
+      bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
     }
   }
 });
@@ -229,7 +229,7 @@ ${item.nickname} ${item.time} ${item.message || 'Изображение, наж�
             if (answer === 'Да') {
               //  const base64Image = messages.filter(item => !item.message)[0].image;
               // const imageBuffer = Buffer.from(base64Image.split(',')[1], 'base64');
-              messages.filter(item => !item.message).map(el => bot.sendPhoto(chatId, Buffer.from(el.image.split(',')[1], 'base64')));
+              messages.filter(item => !item.message).map((el, index) => bot.sendPhoto(chatId, Buffer.from(el.image.split(',')[1], 'base64'), { caption: `№${index + 1} ${el.nickname} ${el.time}` }));
             } else {
               return bot.sendMessage(chatId, `Отменено`);
             }
