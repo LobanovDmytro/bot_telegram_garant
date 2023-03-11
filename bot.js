@@ -167,7 +167,7 @@ function getFunctional(bot) {
         return bot.sendMessage(chatId, 'Сделки:', {
           reply_markup: {
             inline_keyboard: response?.sort((a, b) => a.id - b.id).map(item => [{
-              text: `${item.buyerNickname} / ${item.sellerNickname} / ${item.createdAt?.split('.')[0]?.replace('T', ' ')}`, callback_data: `/dealChat ${item.id}`
+              text: `${item.buyerNickname || item.buyer} / ${item.sellerNickname || item.seller} / ${item.createdAt?.split('.')[0]?.replace('T', ' ')}`, callback_data: `/dealChat ${item.id}`
             }]),
             resize_keyboard: true
           }
