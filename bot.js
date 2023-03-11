@@ -50,7 +50,7 @@ const axiosDeleteChat = async (name, deleteName) => {
     return data;
   }
 };
-const token = '6149778778:AAE4x0EeNIe3kauBGOyxSEbJ9LWy-MyGCFo';
+const token = '6149778778:AAFjm0c8WiaqUieEE-20ttpKhPQSR0vZNsw';
 const bot = new TelegramApi(token, { polling: true });
 const buttonForm = {
   reply_markup: {
