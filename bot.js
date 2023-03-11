@@ -50,8 +50,13 @@ const axiosDeleteChat = async (name, deleteName) => {
     return data;
   }
 };
-const token = '6149778778:AAFjm0c8WiaqUieEE-20ttpKhPQSR0vZNsw';
-const bot = new TelegramApi(token, { polling: true });
+try {
+  const token = '6149778778:AAGece8KHPKtDZdlF-Xq7J1ih9Fwt8jPyd0';
+  const bot = new TelegramApi(token, { polling: true });
+} catch (e) {
+  const token = '6116692347:AAHpsvo1yEqUSPNquV-5Mmrni1cpH2gC74I';
+  const bot = new TelegramApi(token, { polling: true });
+}
 const buttonForm = {
   reply_markup: {
     keyboard: [
