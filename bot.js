@@ -1,9 +1,6 @@
 const axios = require('axios');
-const jwt_decode = require('jwt-decode');
-const json = require('json');
 require('dotenv').config();
 const TelegramApi = require('node-telegram-bot-api');
-const sharp = require('sharp');
 
 axios.defaults.baseURL = `https://back-yipq.onrender.com`;
 
@@ -74,16 +71,6 @@ function getFunctional(bot) {
   bot.on('message', async (ctx) => {
     const chatId = ctx.from?.id;
     const data = ctx.data;
-    // if (ctx.text === 'Шо') {
-    //   return bot.sendMessage(chatId, "Шо ты хуесос", {
-    //     reply_markup: {
-    //       inline_keyboard: [
-    //         [{ text: "Получить id", callback_data: "/MyId" }]
-    //       ],
-    //       resize_keyboard: true
-    //     }
-    //   });
-    //}
     if (ctx.text === '/start') {
       return bot.sendMessage(chatId, "Меню", buttonForm)
     }
@@ -96,7 +83,7 @@ function getFunctional(bot) {
           return bot.sendMessage(chatId, `${result.reduce((acc, item) => `${acc}
   ${item.name} ${item.chatid}`, '')}`)
         } else {
-          return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+          return bot.sendMessage(chatId, `Нет доступа`)
         }
       } catch (e) {
         bot.sendMessage(chatId, `Произошла ошибка, проверьте сервер`)
@@ -115,7 +102,7 @@ function getFunctional(bot) {
             }
           })
         } else {
-          return bot.sendMessage(chatId, `Пошел нахуй чмо без доступа`)
+          return bot.sendMessage(chatId, `Нет доступа`)
         }
       } catch (e) {
         // console.log(1, e)
@@ -140,7 +127,7 @@ function getFunctional(bot) {
               const response = await axiosCreateChat(name, String(chatId), login, password)
               return bot.sendMessage(chatId, `Успешно`);
             } catch (e) {
-              bot.sendMessage(chatId, `Пошел нахуй, ${e?.response?.data?.message?.toLowerCase()}`)
+              bot.sendMessage(chatId, `Произошла ошибка: ${e?.response?.data?.message?.toLowerCase()}`)
             }
           });
         });
@@ -203,7 +190,7 @@ function getFunctional(bot) {
                 return bot.sendMessage(chatId, `Успешно удалено`)
               }
             } catch (e) {
-              bot.sendMessage(chatId, `Пошел нахуй, ${e?.response?.data?.message?.toLowerCase()}`)
+              bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
             };
           } else {
             return bot.sendMessage(chatId, `Имя не найдено(перезапустите бота)`);
@@ -220,10 +207,10 @@ function getFunctional(bot) {
       if (email) {
         try {
           const messages = await axiosGetAdminMessages(chatId, email);
-          if (messages) {
+          if (messages[0]) {
             const checkPhoto = messages?.filter(item => !item.message)[0]?.image || ''
             bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
-  ${item.nickname} ${item.time} ${item.message || 'Изображение, нажмите кнопку ниже чтобы увидеть'}`, '')}`, checkPhoto ? {
+  ${item.nickname || item.administratorName} ${item.time} ${item.message || 'Изображение, нажмите кнопку ниже чтобы увидеть'}`, '')}`, checkPhoto ? {
               reply_markup: {
                 inline_keyboard: [[{ text: `Отправить фото`, callback_data: `Да` }, { text: `Не отправлять`, callback_data: `Нет` }]],
                 resize_keyboard: true
@@ -232,13 +219,13 @@ function getFunctional(bot) {
             if (checkPhoto) return bot.once('callback_query', async (check) => {
               const answer = check.data;
               if (answer === 'Да') {
-                //  const base64Image = messages.filter(item => !item.message)[0].image;
-                // const imageBuffer = Buffer.from(base64Image.split(',')[1], 'base64');
                 messages.filter(item => !item.message).map((el, index) => bot.sendPhoto(chatId, Buffer.from(el.image?.split(',')[1], 'base64'), { caption: `№${index + 1} ${el.nickname} ${el.time}` }));
               } else {
                 return bot.sendMessage(chatId, `Отменено`);
               }
             })
+          } else {
+            bot.sendMessage(chatId, `Нет сообщений`)
           }
         } catch (e) {
           bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
@@ -254,9 +241,11 @@ function getFunctional(bot) {
       if (dealId) {
         try {
           const messages = await axiosGetDealMessages(chatId, dealId);
-          if (messages) {
+          if (messages[0]) {
             return bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
   ${item.nickname} ${item.time} ${item.message}`, '')}`)
+          } else {
+            bot.sendMessage(chatId, `Нет сообщений`)
           }
         } catch (e) {
           bot.sendMessage(chatId, `Ошибка, ${e?.response?.data?.message?.toLowerCase()}`)
