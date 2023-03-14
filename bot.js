@@ -2,7 +2,7 @@ const axios = require('axios');
 require('dotenv').config();
 const TelegramApi = require('node-telegram-bot-api');
 
-axios.defaults.baseURL = `https://back-yipq.onrender.com`;
+axios.defaults.baseURL = `https://back-hbht.onrender.com`;
 
 const axiosGetChatID = async () => {
   const { data } = await axios.get('api/tg/get');
@@ -57,7 +57,7 @@ const buttonForm = {
   }
 }
 try {
-  const token = '6149778778:AAGece8KHPKtDZdlF-Xq7J1ih9Fwt8jPyd0';
+  const token = '6281076262:AAFCn9nNCKer1XzEfb221UuTQPXSWZcHK24';
   const bot = new TelegramApi(token, { polling: true });
   getFunctional(bot)
 } catch (e) {
@@ -208,22 +208,10 @@ function getFunctional(bot) {
         try {
           const messages = await axiosGetAdminMessages(chatId, email);
           if (messages[0]) {
-            const checkPhoto = messages?.filter(item => !item.message)[0]?.image || ''
-            bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
-  ${item.nickname || item.administratorName} ${item.time} ${item.message || 'Изображение, нажмите кнопку ниже чтобы увидеть'}`, '')}`, checkPhoto ? {
-              reply_markup: {
-                inline_keyboard: [[{ text: `Отправить фото`, callback_data: `Да` }, { text: `Не отправлять`, callback_data: `Нет` }]],
-                resize_keyboard: true
-              }
-            } : {})
-            if (checkPhoto) return bot.once('callback_query', async (check) => {
-              const answer = check.data;
-              if (answer === 'Да') {
-                messages.filter(item => !item.message).map((el, index) => bot.sendPhoto(chatId, Buffer.from(el.image?.split(',')[1], 'base64'), { caption: `№${index + 1} ${el.nickname} ${el.time}` }));
-              } else {
-                return bot.sendMessage(chatId, `Отменено`);
-              }
-            })
+            messages?.map((item) => item.nickname === 'location' ? null
+              : item.message ?
+                bot.sendMessage(chatId, `${item.nickname || item.administratorName} ${item.time} ${item.message}`)
+                : bot.sendPhoto(chatId, Buffer.from(item.image?.split(',')[1], 'base64'), { caption: `${item.nickname} ${item.time}` }))
           } else {
             bot.sendMessage(chatId, `Нет сообщений`)
           }
@@ -242,8 +230,10 @@ function getFunctional(bot) {
         try {
           const messages = await axiosGetDealMessages(chatId, dealId);
           if (messages[0]) {
-            return bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
-  ${item.nickname} ${item.time} ${item.message}`, '')}`)
+            return messages?.map(item => bot.sendMessage(chatId, `${item.nickname} ${item.time} ${item.message}`))
+
+            //           bot.sendMessage(chatId, `${messages.reduce((acc, item) => `${acc}
+            // ${item.nickname} ${item.time} ${item.message}`, '')}`)
           } else {
             bot.sendMessage(chatId, `Нет сообщений`)
           }
